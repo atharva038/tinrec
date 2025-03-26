@@ -56,9 +56,7 @@ npm install
 ### **3️⃣ Environment Variables**
 Create a **.env** file in the `server/` directory and add the following:
 ```
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
+Ask me for .env file, without this website is not going to start
 ```
 
 ### **4️⃣ Run the Project**
