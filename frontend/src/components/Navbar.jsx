@@ -18,7 +18,14 @@ const CustomNavbar = () => {
     return (
         <Navbar expand="lg" className="custom-navbar">
             <Container>
+                
                 <Navbar.Brand as={Link} to="/" className="brand-title">
+                    <img
+                        src="/images/logo.jpg"
+                        alt="E-Waste Management"
+                        height="40"
+                        className="d-inline-block align-top me-2"
+                    />
                     E-Waste Management
                 </Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -33,7 +40,7 @@ const CustomNavbar = () => {
                             </>
                         ) : (
                             <>
-                                <Nav.Link as={Link} to="/dashboard" className="nav-link">Dashboard</Nav.Link>
+                                <Nav.Link as={Link} to="/dashboard/user" className="nav-link">Dashboard</Nav.Link>
 
                                 {/* ✅ Show "Register Pickup" only for non-recycler users */}
                                 {!isRecycler && (
