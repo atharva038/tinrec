@@ -28,7 +28,11 @@ const Login = () => {
             localStorage.setItem("user", JSON.stringify(res.user));
             login(res.user, res.token); // ✅ Call login function
             setTimeout(() => {
-                navigate("/dashboard/user");
+                if (res.user.role === 'recycler') {
+                    navigate("/dashboard/recycler");
+                } else {
+                    navigate("/dashboard/user");
+                }
             }, 500); // Delay 500ms before redirecting
         } catch (err) {
             setError(err.message || "Login failed");

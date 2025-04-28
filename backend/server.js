@@ -19,7 +19,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/ewaste", eWasteRoutes);
 app.use("/api/requests", requestRoutes);
-app.use("/api", recyclerRoutes);
+app.use("/api/recyclers", recyclerRoutes);
 
 const PORT = process.env.PORT || 5000;
 

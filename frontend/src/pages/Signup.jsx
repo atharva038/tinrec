@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Container, TextField, Button, Typography, Box } from "@mui/material";
+import {
+    Container,
+    TextField,
+    Button,
+    Typography,
+    Box,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+} from "@mui/material";
 import { useForm } from "react-hook-form";
 import { signupUser } from "../services/api"; // Correct API import
 import { useNavigate } from "react-router-dom";
@@ -12,11 +22,16 @@ const Signup = () => {
 
     const onSubmit = async (data) => {
         try {
-            await signupUser(data); // Call API correctly
+            const response = await signupUser(data);
             reset();
-            navigate("/login");
+            // Redirect recyclers to registration form
+            if (data.role === 'recycler') {
+                navigate("/recycler-registration");
+            } else {
+                navigate("/login");
+            }
         } catch (err) {
-            setError(err.message || "Signup failed"); // Ensure error is displayed properly
+            setError(err.message || "Signup failed");
         }
     };
 
@@ -54,6 +69,17 @@ const Signup = () => {
                         {...register("password", { required: "Password is required" })}
                         required
                     />
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Role</InputLabel>
+                        <Select
+                            {...register("role", { required: "Role is required" })}
+                            defaultValue="user"
+                            label="Role"
+                        >
+                            <MenuItem value="user">User</MenuItem>
+                            <MenuItem value="recycler">Recycler</MenuItem>
+                        </Select>
+                    </FormControl>
                     <Button
                         type="submit"
                         variant="contained"

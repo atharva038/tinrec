@@ -12,6 +12,7 @@ import SelectRecycler from "./pages/SelectRecycler";
 import ConfirmRequest from "./pages/ConfirmRequest";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+import RecyclerRegistration from './pages/RecyclerRegistration';
 
 function App() {
   const token = localStorage.getItem("token");
@@ -27,8 +28,8 @@ function App() {
         <Route path="/confirm-request" element={<ConfirmRequest />} />
 
         <Route path="/dashboard/user" element={<UserDashboard token={token} />} />
-        <Route path="/dashboard/recycler" element={<RecyclerDashboard token={token} />} />
-
+        <Route path="/recycler-registration" element={<RecyclerRegistration />} />
+        <Route path="/dashboard/recycler" element={<RecyclerDashboard />} />
       </Routes>
       <Footer />
     </>

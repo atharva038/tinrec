@@ -35,6 +35,11 @@ const userSchema = new mongoose.Schema(
       state: { type: String, trim: true },
       zip: { type: String, trim: true },
     },
+    role: {
+      type: String,
+      enum: ['user', 'recycler', 'admin'],
+      default: 'user'
+    },
     createdAt: {
       type: Date,
       default: Date.now,
