@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Typography, CircularProgress, Box, Card, CardContent, Button, Grid } from "@mui/material";
-import { getNearbyRecyclers } from "../services/api"; // Import API function
+import { getNearbyRecyclers } from '../services/recyclerApi'; // Make sure this import is correct
 
 const SelectRecycler = () => {
     const location = useLocation();
@@ -21,15 +21,13 @@ const SelectRecycler = () => {
 
         const fetchRecyclers = async () => {
             try {
-                const data = await getNearbyRecyclers(city); // Call API from `api.js`
-                if (data.length === 0) {
-                    setError(`No recyclers found in ${city}.`);
-                } else {
-                    setRecyclers(data);
-                }
-            } catch (err) {
+                // Update this to use the corrected function from recyclerApi.js
+                const response = await getNearbyRecyclers(city);
+                setRecyclers(response.data.data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching recyclers:", error);
                 setError("Failed to load recyclers. Please try again.");
-            } finally {
                 setLoading(false);
             }
         };

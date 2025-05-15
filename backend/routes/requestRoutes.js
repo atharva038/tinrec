@@ -1,28 +1,36 @@
-import express from "express";
+import express from 'express';
+import { verifyToken } from '../middleware/authMiddleware.js';
 import {
-  getPendingRequests,
-  acceptRequest,
   createRequest,
   getUserRequests,
+  getPendingRequests,
   getRecyclerRequests,
-} from "../controllers/requestController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
+  // assignRequest,
+  // completeRequest,
+  acceptRequest // Make sure this controller is imported
+} from '../controllers/requestController.js';
 
 const router = express.Router();
 
-// ✅ Create a new request (User only)
-router.post("/", authMiddleware,createRequest);
+// Create a new request
+router.post('/', verifyToken, createRequest);
 
-// ✅ Get all user requests (User only)
-router.get("/user", authMiddleware, getUserRequests);
+// Get all user requests
+router.get('/user', verifyToken, getUserRequests);
 
-// ✅ Get all recycler-assigned requests (Recycler only)
-router.get("/recycler", authMiddleware, getRecyclerRequests);
+// Get all pending requests (for admin)
+router.get('/pending', verifyToken, getPendingRequests);
 
-// ✅ Recycler accepts a request
-router.put("/accept/:id", authMiddleware, acceptRequest);
+// Get requests for recycler
+router.get('/recycler', verifyToken, getRecyclerRequests);
 
-// ✅ Get all pending e-waste requests (Recycler only)
-router.get("/pending", authMiddleware, getPendingRequests);
+// Assign a request to a recycler
+// router.patch('/:id/assign', verifyToken, assignRequest);
+
+// Accept a request by recycler
+router.patch('/:id/accept', verifyToken, acceptRequest); // Add this route if missing
+
+// Mark request as completed
+// router.patch('/:id/complete', verifyToken, completeRequest);
 
 export default router;

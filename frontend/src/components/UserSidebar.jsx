@@ -1,12 +1,17 @@
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material';
+import { Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material';
 import {
     Dashboard, AddBox, History, AutoGraph,
     CardGiftcard, Settings, Logout
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const UserSidebar = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isActive = (path) => {
+        return location.pathname === path;
+    };
 
     const menuItems = [
         { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard/user' },
@@ -45,27 +50,32 @@ const UserSidebar = () => {
             <Box sx={{ overflow: 'auto', mt: 8 }}>
                 <List>
                     {menuItems.map((item) => (
-                        <ListItem
-                            button
+                        <ListItemButton
                             key={item.text}
                             onClick={item.onClick || (() => navigate(item.path))}
+                            selected={isActive(item.path)}
                             sx={{
+                                py: 1.5,
+                                borderRadius: 1,
+                                mb: 0.5,
+                                color: isActive(item.path) ? '#00897b' : 'inherit',
+                                bgcolor: isActive(item.path) ? 'rgba(0, 137, 123, 0.08)' : 'transparent',
                                 '&:hover': {
-                                    backgroundColor: '#e0e0e0'
-                                }
+                                    bgcolor: isActive(item.path) ? 'rgba(0, 137, 123, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+                                },
                             }}
                         >
-                            <ListItemIcon sx={{ color: '#2e7d32' }}>
+                            <ListItemIcon sx={{ color: 'inherit', minWidth: '36px' }}>
                                 {item.icon}
                             </ListItemIcon>
                             <ListItemText
                                 primary={
-                                    <Typography sx={{ color: '#2e7d32' }}>
+                                    <Typography sx={{ fontWeight: isActive(item.path) ? 600 : 400 }}>
                                         {item.text}
                                     </Typography>
                                 }
                             />
-                        </ListItem>
+                        </ListItemButton>
                     ))}
                 </List>
             </Box>

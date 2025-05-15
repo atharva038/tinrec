@@ -51,8 +51,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    console.log("Generated Token:", token); // ✅ Check if token is generated
-
+   
     res.json({
       token,
       user: { id: user._id, username: user.username, email: user.email, role: user.role },

@@ -3,7 +3,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // Register as a recycler
 export const registerRecycler = async (data, token) => {
-  return await axios.post(`${API_URL}/recyclers`, data, {
+  return await axios.post(`${API_URL}/recyclers/register`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
@@ -11,6 +11,13 @@ export const registerRecycler = async (data, token) => {
 // Get all recyclers
 export const getRecyclers = async () => {
   return await axios.get(`${API_URL}/recyclers`);
+};
+
+// Get recycler profile
+export const getRecyclerProfile = async (token) => {
+  return await axios.get(`${API_URL}/recyclers/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 };
 
 // Update recycler availability
@@ -24,7 +31,9 @@ export const updateAvailability = async (recyclerId, availability, token) => {
   );
 };
 
-// Get nearby recyclers
-export const getNearbyRecyclers = async (lat, lng) => {
-  return await axios.get(`${API_URL}/recyclers/nearby?lat=${lat}&lng=${lng}`);
+// Get nearby recyclers - FIXED: Update to match controller's getNearbyRecyclers handler
+export const getNearbyRecyclers = async (city) => {
+  return await axios.get(`${API_URL}/recyclers`, {
+    params: { city }
+  });
 };

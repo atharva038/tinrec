@@ -6,7 +6,8 @@ import roleCheck from '../middleware/roleCheck.js';
 const router = express.Router();
 
 // Public routes
-router.get('/select-recycler', getNearbyRecyclers);
+router.get('/', getNearbyRecyclers); // This should match the /recyclers endpoint in your API calls
+
 
 // Protected routes
 router.post('/register', authMiddleware, roleCheck(['recycler']), registerRecycler);

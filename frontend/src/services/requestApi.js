@@ -15,14 +15,17 @@ export const getUserRequests = async (token) => {
   });
 };
 
-// Get all recycler-assigned requests
+// Get requests for a recycler
 export const getRecyclerRequests = async (token) => {
-  const response = await axios.get(`${API_URL}/requests/recycler`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  console.log("API Response:", response.data); // ✅ Debugging log
-
-  return response.data;
+  try {
+    const response = await axios.get(`${API_URL}/requests/recycler`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response;
+  } catch (error) {
+    console.error("Error in getRecyclerRequests:", error);
+    throw error;
+  }
 };
 
 // Assign a request to a recycler
@@ -46,11 +49,22 @@ export const completeRequest = async (requestId, token) => {
     }
   );
 };
+
+// Accept request by recycler
 export const acceptRequest = async (requestId, token) => {
-  const res = await axios.put(
-    `${API_URL}/accept/${requestId}`,
-    {},
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return res.data;
+  try {
+    console.log(`Accepting request ${requestId}`);
+    const response = await axios.patch(
+      `${API_URL}/requests/${requestId}/accept`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log("Accept request response:", response);
+    return response;
+  } catch (error) {
+    console.error("Error in acceptRequest:", error);
+    throw error;
+  }
 };
