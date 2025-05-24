@@ -10,9 +10,13 @@ import RecyclerDashboard from "./pages/RecyclerDashboard";
 import PrivateRoute from "./components/PrivateRoute";
 import SelectRecycler from "./pages/SelectRecycler";
 import ConfirmRequest from "./pages/ConfirmRequest";
+import RequestHistory from './components/RecyclerDashboard/RequestHistory';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import RecyclerLayout from './layouts/RecyclerLayout';
+import RecyclerRegistration from "./components/RecyclerDashboard/RecyclerRegistration";
+import UpdateRecyclerServices from "./components/RecyclerDashboard/UpdateRecyclerServices";
+import RecyclerRegistrationGuard from "./guards/RecyclerRegistrationGuard"; // This is a new component we'll create
 
-import RecyclerRegistration from './pages/RecyclerRegistration';
 
 function App() {
   const token = localStorage.getItem("token");
@@ -28,9 +32,36 @@ function App() {
         <Route path="/confirm-request" element={<ConfirmRequest />} />
 
         <Route path="/dashboard/user" element={<UserDashboard token={token} />} />
-        <Route path="/recycler-registration" element={<RecyclerRegistration />} />
-        <Route path="/dashboard/recycler" element={<RecyclerDashboard />} />
+        {/* Recycler routes with layout */}
+        <Route path="/dashboard/recycler" element={
+          <RecyclerLayout>
+            <RecyclerDashboard />
+          </RecyclerLayout>
+        } />
+
+        <Route path="/request-history" element={
+          <RecyclerLayout>
+            <RequestHistory />
+          </RecyclerLayout>
+        } />
+
+        <Route path="/recycler-registration" element={
+          <RecyclerLayout>
+            <RecyclerRegistrationGuard>
+              <RecyclerRegistration />
+            </RecyclerRegistrationGuard>
+          </RecyclerLayout>
+        } />
+        <Route
+          path="/dashboard/recycler/update-services"
+          element={
+            <RecyclerLayout>
+              <UpdateRecyclerServices />
+            </RecyclerLayout>
+          }
+        />
       </Routes>
+
       <Footer />
     </>
   );

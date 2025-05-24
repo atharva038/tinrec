@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Container,
@@ -15,7 +15,8 @@ import {
     InputLabel,
     Select,
     FormHelperText,
-    Alert
+    Alert,
+    CircularProgress
 } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import {
@@ -25,11 +26,27 @@ import {
     Category,
     Description,
     Scale,
-    ArrowForward
+    ArrowForward,
+    MyLocation
 } from "@mui/icons-material";
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 const cities = ["Mumbai", "Pune", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad", "Jaipur"];
 const categories = ["Electronics", "Batteries", "Cables", "Mobile Phones", "Laptops", "Monitors", "Printers", "Computer Parts", "Home Appliances"];
+
+// Map configurations
+const mapContainerStyle = {
+    width: '100%',
+    height: '300px',
+    borderRadius: '8px'
+};
+
+const defaultCenter = {
+    lat: 20.5937, // Default center of India
+    lng: 78.9629
+};
+
+const libraries = ["places"];
 
 const SubmitEWaste = () => {
     const navigate = useNavigate();
@@ -48,10 +65,21 @@ const SubmitEWaste = () => {
     });
 
     const [measurementMode, setMeasurementMode] = useState(null); // 'quantity' or 'weight'
+    const [marker, setMarker] = useState(null);
+    const [mapCenter, setMapCenter] = useState(defaultCenter);
+    const [mapZoom, setMapZoom] = useState(5);
+    const [isGeocoding, setIsGeocoding] = useState(false);
 
     // Watch quantity and weight to handle mutual exclusivity
     const quantity = watch("quantity");
     const weight = watch("weight");
+    const selectedCity = watch("city");
+
+    // Load Google Maps API
+    const { isLoaded, loadError } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+        libraries,
+    });
 
     // Handle switching between quantity and weight inputs
     const handleMeasurementChange = (mode) => {
@@ -63,8 +91,122 @@ const SubmitEWaste = () => {
         }
     };
 
+    // Center map on selected city when city changes
+    useEffect(() => {
+        if (selectedCity && isLoaded && window.google) {
+            setIsGeocoding(true);
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ address: selectedCity + ", India" }, (results, status) => {
+                setIsGeocoding(false);
+                if (status === "OK" && results[0]) {
+                    const location = results[0].geometry.location;
+                    setMapCenter({
+                        lat: location.lat(),
+                        lng: location.lng()
+                    });
+                    setMapZoom(11);
+                }
+            });
+        }
+    }, [selectedCity, isLoaded]);
+
+    // Handle map click to set marker
+    const handleMapClick = useCallback((event) => {
+        if (!isLoaded || !window.google) return;
+
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        setMarker({ lat, lng });
+
+        // Get address from coordinates using Geocoding API
+        setIsGeocoding(true);
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            setIsGeocoding(false);
+            if (status === "OK" && results[0]) {
+                setValue("pickupAddress", results[0].formatted_address);
+
+                // Try to extract city from the address components
+                const cityComponent = results[0].address_components.find(
+                    component => component.types.includes("locality")
+                );
+
+                if (cityComponent && cities.includes(cityComponent.long_name)) {
+                    setValue("city", cityComponent.long_name);
+                }
+            }
+        });
+    }, [isLoaded, setValue]);
+
+    // Use browser's geolocation API to get current location
+    const handleGetCurrentLocation = () => {
+        if (!isLoaded || !window.google) return;
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    setMarker({ lat, lng });
+                    setMapCenter({ lat, lng });
+                    setMapZoom(15);
+
+                    // Get address from coordinates
+                    setIsGeocoding(true);
+                    const geocoder = new window.google.maps.Geocoder();
+                    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                        setIsGeocoding(false);
+                        if (status === "OK" && results[0]) {
+                            setValue("pickupAddress", results[0].formatted_address);
+
+                            // Try to extract city from the address components
+                            const cityComponent = results[0].address_components.find(
+                                component => component.types.includes("locality")
+                            );
+
+                            if (cityComponent && cities.includes(cityComponent.long_name)) {
+                                setValue("city", cityComponent.long_name);
+                            }
+                        }
+                    });
+                },
+                (error) => {
+                    console.error("Geolocation error:", error);
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+    };
+
     const onSubmit = (data) => {
-        navigate("/select-recycler", { state: data });
+        // Add coordinates to the form data if available
+        const formData = { ...data };
+        if (marker) {
+            formData.coordinates = marker;
+        }
+        navigate("/select-recycler", { state: formData });
+    };
+
+    const renderMap = () => {
+        return (
+            <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={mapCenter}
+                zoom={mapZoom}
+                onClick={handleMapClick}
+                options={{
+                    fullscreenControl: false,
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    zoomControlOptions: {
+                        position: window.google.maps.ControlPosition.RIGHT_TOP
+                    }
+                }}
+            >
+                {marker && <Marker position={marker} />}
+            </GoogleMap>
+        );
     };
 
     return (
@@ -307,6 +449,54 @@ const SubmitEWaste = () => {
                                 <Typography variant="subtitle1" fontWeight="bold" color="#00897b" sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center' }}>
                                     <LocationOn sx={{ mr: 1 }} /> Pickup Location
                                 </Typography>
+                            </Grid>
+
+                            {/* Google Map */}
+                            <Grid item xs={12}>
+                                <Box sx={{ mb: 2, position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+                                    {loadError && (
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            Error loading Google Maps. Please check your API key.
+                                        </Alert>
+                                    )}
+
+                                    {!isLoaded ? (
+                                        <Box sx={{
+                                            height: '300px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            bgcolor: '#f5f5f5',
+                                            borderRadius: '8px'
+                                        }}>
+                                            <CircularProgress color="primary" />
+                                        </Box>
+                                    ) : (
+                                        renderMap()
+                                    )}
+
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        startIcon={<MyLocation />}
+                                        onClick={handleGetCurrentLocation}
+                                        disabled={!isLoaded || isGeocoding}
+                                        sx={{
+                                            position: 'absolute',
+                                            bottom: 10,
+                                            left: 10,
+                                            backgroundColor: 'white',
+                                            color: '#00897b',
+                                            '&:hover': { backgroundColor: '#f1f1f1' },
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        {isGeocoding ? <CircularProgress size={20} /> : "Use My Location"}
+                                    </Button>
+                                </Box>
+                                <Alert severity="info" sx={{ mb: 2 }}>
+                                    Click on the map to set your pickup location or use the "Use My Location" button
+                                </Alert>
                             </Grid>
 
                             <Grid item xs={12} md={6}>

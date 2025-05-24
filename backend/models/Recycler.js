@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-
 const recyclerSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -24,6 +23,18 @@ const recyclerSchema = new mongoose.Schema({
     type: String,
     required: true
   }],
+  pickupRadius: {
+    type: Number,
+    default: 10
+  },
+  certifications: {
+    type: String,
+    default: ''
+  },
+  description: {
+    type: String,
+    default: ''
+  },
   isVerified: {
     type: Boolean,
     default: false

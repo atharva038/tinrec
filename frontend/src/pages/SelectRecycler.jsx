@@ -6,7 +6,7 @@ import { getNearbyRecyclers } from '../services/recyclerApi'; // Make sure this 
 const SelectRecycler = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { city } = location.state || {}; // Get city from state
+    const { city, coordinates } = location.state || {};
 
     const [recyclers, setRecyclers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ const SelectRecycler = () => {
         const fetchRecyclers = async () => {
             try {
                 // Update this to use the corrected function from recyclerApi.js
-                const response = await getNearbyRecyclers(city);
+                const response = await getNearbyRecyclers(city, coordinates);
                 setRecyclers(response.data.data);
                 setLoading(false);
             } catch (error) {

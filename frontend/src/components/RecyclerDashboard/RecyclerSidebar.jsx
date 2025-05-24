@@ -3,17 +3,16 @@ import {
     Box,
     Drawer,
     List,
-    ListItem,
     ListItemIcon,
     ListItemText,
     Typography,
     useMediaQuery,
     useTheme,
     IconButton,
-    Divider,
     Avatar,
     styled,
-    ListItemButton
+    ListItemButton,
+    CircularProgress
 } from '@mui/material';
 import {
     Dashboard,
@@ -22,13 +21,15 @@ import {
     Settings,
     Logout,
     Menu as MenuIcon,
-    RecyclingOutlined
+    RecyclingOutlined,
+    Category
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
+import axios from 'axios';
 
-// Constants for consistent dimensions - reduce width to match screenshot
-const DRAWER_WIDTH = 240;
+// Constants for consistent dimensions - match the screenshot
+const DRAWER_WIDTH = 220; // Keep sidebar width at 220px
 const APPBAR_HEIGHT = 64;
 
 // Styled components to match the provided CSS
@@ -38,6 +39,7 @@ const SidebarHeader = styled(Box)(({ theme }) => ({
     borderBottom: '1px solid rgba(255,255,255,0.1)',
     background: '#00897b', // Use exact teal color from screenshot
     color: 'white',
+    margin: 0, // Ensure no margin
 }));
 
 const SidebarNavItem = styled(ListItemButton)(({ theme, active }) => ({
@@ -64,10 +66,40 @@ const RecyclerSidebar = () => {
     const { user } = useContext(AuthContext || { user: null });
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [isRegistered, setIsRegistered] = useState(null); // null = loading, true/false = status
+    const [loading, setLoading] = useState(true);
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
+
+    // Check if recycler is registered
+    useEffect(() => {
+        const checkRegistrationStatus = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    setIsRegistered(false);
+                    return;
+                }
+
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/recyclers/profile`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                // If we get here without error, profile exists
+                setIsRegistered(true);
+            } catch (error) {
+                // If error (404 profile not found), they're not registered
+                setIsRegistered(false);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkRegistrationStatus();
+    }, []);
 
     useEffect(() => {
         if (isMobile) {
@@ -81,24 +113,59 @@ const RecyclerSidebar = () => {
         navigate('/login');
     };
 
-    const menuItems = [
-        { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard/recycler' },
-        { text: 'Registration Form', icon: <AppRegistration />, path: '/recycler-registration' },
-        { text: 'Request History', icon: <History />, path: '/request-history' },
-        { text: 'Settings', icon: <Settings />, path: '/settings' },
-    ];
+    // Dynamic menu items based on registration status
+    const getMenuItems = () => {
+        // Base items all recyclers see
+        const baseItems = [
+            { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard/recycler' }
+        ];
+
+        // Items only for registered recyclers
+        const registeredItems = [
+            { text: 'Manage Services', icon: <Category />, path: '/dashboard/recycler/update-services' },
+            { text: 'Request History', icon: <History />, path: '/request-history' },
+            { text: 'Settings', icon: <Settings />, path: '/settings' }
+        ];
+
+        // Items only for unregistered recyclers
+        const unregisteredItems = [
+            { text: 'Complete Registration', icon: <AppRegistration />, path: '/recycler-registration' }
+        ];
+
+        // Combine appropriate items based on registration status
+        return [
+            ...baseItems,
+            ...(isRegistered ? registeredItems : unregisteredItems)
+        ];
+    };
 
     const isActive = (path) => {
         return location.pathname === path;
     };
+
+    // Show loading state while checking registration
+    if (loading) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                width: DRAWER_WIDTH,
+                flexShrink: 0 // Prevent shrinking
+            }}>
+                <CircularProgress size={24} sx={{ color: '#00897b' }} />
+            </Box>
+        );
+    }
 
     const drawerContent = (
         <>
             <SidebarHeader>
                 <Avatar
                     sx={{
-                        width: 50, // Further reduced size to match screenshot
-                        height: 50, // Further reduced size to match screenshot
+                        width: 50,
+                        height: 50,
                         margin: '0 auto 0.75rem auto',
                         backgroundColor: 'rgba(255, 255, 255, 0.2)',
                         border: '2px solid rgba(255, 255, 255, 0.6)',
@@ -118,11 +185,11 @@ const RecyclerSidebar = () => {
                 padding: '1rem 0.75rem',
                 display: 'flex',
                 flexDirection: 'column',
-                height: 'calc(100% - 140px)', // Adjusted to account for smaller header
+                height: 'calc(100% - 140px)', // Adjusted to account for header height
                 overflow: 'auto', // Make content scrollable
             }}>
                 <List sx={{ padding: 0, flex: '1 1 auto' }}>
-                    {menuItems.map((item) => (
+                    {getMenuItems().map((item) => (
                         <SidebarNavItem
                             key={item.text}
                             onClick={() => navigate(item.path)}
@@ -224,7 +291,7 @@ const RecyclerSidebar = () => {
                 }}
                 sx={{
                     width: DRAWER_WIDTH,
-                    flexShrink: 0,
+                    flexShrink: 0, // Prevent sidebar from shrinking
                     display: { xs: 'block', md: 'block' },
                     '& .MuiDrawer-paper': {
                         width: DRAWER_WIDTH,
@@ -232,25 +299,24 @@ const RecyclerSidebar = () => {
                         boxShadow: '0 0 15px rgba(0, 0, 0, 0.05)',
                         backgroundColor: '#ffffff',
                         border: 'none',
-                        top: APPBAR_HEIGHT,
-                        height:'auto',  // Remove extra space at bottom
-                        maxHeight:'auto' ,
-                        position: 'sticky', // Keep it fixed on the left
-                        zIndex: 1000, // Below the footer's z-index
-                        overflow: 'hidden'
+                        borderRight: '1px solid rgba(0, 0, 0, 0.08)', // Add subtle right border
+                        top: APPBAR_HEIGHT, // Position exactly at the bottom of navbar
+                        height: `calc(100% - ${APPBAR_HEIGHT}px)`, // Take full height minus navbar
+                        position: "sticky", // Changed from absolute to fixed for better positioning
+                        zIndex: 1000,
+                        overflow: 'hidden',
+                        marginLeft: 0,
+                        padding: 0, // No padding
+                        // Remove any right padding or margin
+                        pr: 0,
+                        mr: 0,
                     },
                 }}
             >
                 {drawerContent}
             </Drawer>
 
-            {/* Only for desktop - add permanent spacer to maintain layout spacing */}
-            {!isMobile && (
-                <Box sx={{
-                    width: DRAWER_WIDTH,
-                    flexShrink: 0,
-                }} />
-            )}
+
         </>
     );
 };

@@ -31,9 +31,21 @@ export const updateAvailability = async (recyclerId, availability, token) => {
   );
 };
 
-// Get nearby recyclers - FIXED: Update to match controller's getNearbyRecyclers handler
-export const getNearbyRecyclers = async (city) => {
-  return await axios.get(`${API_URL}/recyclers`, {
-    params: { city }
+// Update the getNearbyRecyclers function to accept coordinates
+export const getNearbyRecyclers = async (city, coordinates = null) => {
+  let url = `${API_URL}/recyclers?city=${city}`;
+
+  // Add coordinates to query if available
+  if (coordinates) {
+    url += `&lat=${coordinates.lat}&lng=${coordinates.lng}`;
+  }
+
+  return await axios.get(url);
+};
+
+// Update recycler services
+export const updateRecyclerServices = async (data, token) => {
+  return await axios.put(`${API_URL}/recyclers/services`, data, {
+    headers: { Authorization: `Bearer ${token}` },
   });
 };

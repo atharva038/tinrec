@@ -1,12 +1,12 @@
 import { Box, useTheme, useMediaQuery } from '@mui/material';
-import RecyclerSidebar from '../components/RecyclerSidebar';
+import RecyclerSidebar from '../components/RecyclerDashboard/RecyclerSidebar';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 
 const RecyclerLayout = ({ children }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const DRAWER_WIDTH = 240; // Match the width in RecyclerSidebar
+    const DRAWER_WIDTH = 220; // Reduced from 240px to match your other components
 
     return (
         <Box sx={{
@@ -23,8 +23,8 @@ const RecyclerLayout = ({ children }) => {
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    minHeight: 'calc(100vh - 64px)', // Full viewport height minus navbar
-                    marginTop: '64px', // Space for navbar
+                    minHeight: '100vh',
+                    backgroundColor: '#f9fafb'
                 }}
             >
                 {/* Main content area with sidebar */}
@@ -38,32 +38,14 @@ const RecyclerLayout = ({ children }) => {
                     <Box
                         component="main"
                         sx={{
-                            flexGrow: 1,
+                            flexGrow: 0,
                             p: { xs: 2, md: 2 }, // Reduced padding
-                            width: { xs: '100%', md: `calc(100% - ${DRAWER_WIDTH}px)` },
-                            marginLeft: { xs: 0, md: 0 }, // No left margin to match screenshot
-                            transition: theme.transitions.create(['margin', 'width'], {
-                                easing: theme.transitions.easing.sharp,
-                                duration: theme.transitions.duration.leavingScreen,
-                            }),
+                            // width: { xs: '100%', md: `calc(100% - ${DRAWER_WIDTH}px)` },
+                            // overflow: 'auto', // Allow scrolling if content is too tall
                         }}
                     >
                         {children}
                     </Box>
-                </Box>
-
-                {/* Footer - completely separate from sidebar */}
-                <Box
-                    sx={{
-                        flexShrink: 0, // Prevent footer from shrinking
-                        marginTop: 'auto', // Push to bottom when content is short
-                        position: 'relative',
-                        width: '100%',
-                        left: 0, // Ensure full width
-                        zIndex: 1200, // Above the sidebar (MUI drawer usually has z-index 1200)
-                    }}
-                >
-                    <Footer />
                 </Box>
             </Box>
         </Box>

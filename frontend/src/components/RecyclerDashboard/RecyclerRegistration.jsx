@@ -26,8 +26,8 @@ import {
     useMediaQuery
 } from "@mui/material";
 import { useForm } from "react-hook-form";
-import { registerRecycler } from "../services/recyclerApi";
-import AuthContext from "../context/AuthContext";
+import { registerRecycler, getRecyclerProfile } from "../../services/recyclerApi";
+import AuthContext from "../../context/AuthContext";
 
 import {
     Business,
@@ -40,9 +40,6 @@ import {
     ArrowForward,
     ArrowBack
 } from "@mui/icons-material";
-
-// Just leave the comment as it is
-// Notice: Removed RecyclerLayout import since we'll add this component directly to routes
 
 const wasteTypes = [
     "Electronics",
@@ -57,13 +54,13 @@ const wasteTypes = [
 
 const cities = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Pune", "Chennai", "Kolkata"];
 
-
 const RecyclerRegistration = () => {
     const { register, handleSubmit, formState: { errors }, watch } = useForm();
     const [selectedWasteTypes, setSelectedWasteTypes] = useState([]);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [checking, setChecking] = useState(true); // Add loading state while checking profile
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
     const [activeStep, setActiveStep] = useState(0);
@@ -71,11 +68,38 @@ const RecyclerRegistration = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    // First, check if user is already registered as a recycler
     useEffect(() => {
-        // Redirect if user is not a recycler
-        if (user && user.role !== "recycler") {
-            navigate("/");
-        }
+        const checkRegistrationStatus = async () => {
+            try {
+                setChecking(true);
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+
+                // If the user is not a recycler, redirect to home
+                if (user && user.role !== "recycler") {
+                    navigate("/");
+                    return;
+                }
+
+                // Try to get recycler profile - if it exists, redirect to services page
+                await getRecyclerProfile(token);
+                // If we get here (no error), then profile exists
+                navigate('/dashboard/recycler/update-services');
+            } catch (error) {
+                // If error (profile not found), allow registration to proceed
+                // This is expected for new recyclers
+                console.log("Recycler not registered yet");
+            } finally {
+                setChecking(false);
+            }
+        };
+
+        checkRegistrationStatus();
     }, [user, navigate]);
 
     const handleWasteTypeClick = (wasteType) => {
@@ -444,7 +468,7 @@ const RecyclerRegistration = () => {
                                 }}
                                 icon={<VerifiedUser fontSize="inherit" />}
                             >
-                                Please review your information before submitting. You can edit your profile later.
+                                Please review your information before submitting. You can edit your profile later in the "Manage Services" section.
                             </Alert>
 
                             <Card
@@ -553,25 +577,43 @@ const RecyclerRegistration = () => {
         }
     };
 
-    // MAIN CHANGES: Removed RecyclerLayout wrapper, adjusted margins, fixed styling
+    // Show loading while checking registration status
+    if (checking) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '50vh',
+                padding: 3
+            }}>
+                <CircularProgress sx={{ color: '#00897b', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary">
+                    Checking registration status...
+                </Typography>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={{
             flexGrow: 1,
-            mt: 0, // Reduced top margin significantly
-            ml: 0, // No left margin to align with sidebar
-            mb: 3 // Keep some bottom margin for spacing
+            mt: 0,
+            ml: 0,
+            mb: 3
         }}>
             <Container
                 maxWidth="md"
                 sx={{
-                    mt: 1, // Small top margin
-                    mb: 2 // Bottom margin
+                    mt: 1,
+                    mb: 2
                 }}
             >
                 <Paper
                     elevation={3}
                     sx={{
-                        p: { xs: 2, md: 3 }, // Reduced padding
+                        p: { xs: 2, md: 3 },
                         borderRadius: 2,
                         background: "linear-gradient(to bottom, rgba(224, 242, 241, 0.3), rgba(255, 255, 255, 1))",
                         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
@@ -580,12 +622,12 @@ const RecyclerRegistration = () => {
                     <Typography
                         variant="h4"
                         sx={{
-                            mt: 0, // No top margin
+                            mt: 0,
                             mb: 1,
                             color: "#00897b",
                             textAlign: "center",
                             fontWeight: "bold",
-                            fontSize: { xs: '1.5rem', md: '2rem' } // Slightly smaller
+                            fontSize: { xs: '1.5rem', md: '2rem' }
                         }}
                     >
                         Register Your Recycling Service
@@ -594,7 +636,7 @@ const RecyclerRegistration = () => {
                     <Typography
                         variant="body1"
                         sx={{
-                            mb: 3, // Reduced margin
+                            mb: 3,
                             textAlign: "center",
                             color: "text.secondary",
                             maxWidth: "700px",
@@ -628,7 +670,7 @@ const RecyclerRegistration = () => {
                         activeStep={activeStep}
                         alternativeLabel
                         sx={{
-                            mb: 3, // Reduced margin
+                            mb: 3,
                             '& .MuiStepLabel-root .Mui-completed': {
                                 color: '#00897b',
                             },
@@ -650,8 +692,8 @@ const RecyclerRegistration = () => {
                         <Box sx={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            mt: 4, // Reduced margin
-                            pt: 2.5, // Reduced padding
+                            mt: 4,
+                            pt: 2.5,
                             borderTop: '1px solid rgba(0, 0, 0, 0.06)'
                         }}>
                             <Button
@@ -660,29 +702,29 @@ const RecyclerRegistration = () => {
                                 variant="outlined"
                                 startIcon={<ArrowBack />}
                                 sx={{
-                                    py: 1.2, // Taller button 
-                                    px: { xs: 2.5, sm: 3.5 }, // Wider button
+                                    py: 1.2,
+                                    px: { xs: 2.5, sm: 3.5 },
                                     borderColor: "#00897b",
                                     color: "#00897b",
-                                    fontWeight: 500, // Bolder text
+                                    fontWeight: 500,
                                     "&:hover": {
                                         borderColor: "#00695c",
                                         backgroundColor: 'rgba(0, 137, 123, 0.04)'
                                     },
-                                    transition: 'all 0.2s ease' // Smooth transition
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
                                 Back
                             </Button>
-                           <Box>
+                            <Box>
                                 {activeStep === steps.length - 1 ? (
                                     <Button
                                         type="submit"
                                         variant="contained"
                                         disabled={loading || success}
                                         sx={{
-                                            py: 1.2, // Match back button height
-                                            px: { xs: 3.5, sm: 4.5 }, // Wider button
+                                            py: 1.2,
+                                            px: { xs: 3.5, sm: 4.5 },
                                             backgroundColor: "#00897b",
                                             "&:hover": {
                                                 backgroundColor: "#00695c",
@@ -708,8 +750,8 @@ const RecyclerRegistration = () => {
                                         disabled={loading || success || (activeStep === 1 && selectedWasteTypes.length === 0)}
                                         endIcon={<ArrowForward />}
                                         sx={{
-                                            py: 1.2, // Match back button height
-                                            px: { xs: 3.5, sm: 4.5 }, // Wider button
+                                            py: 1.2,
+                                            px: { xs: 3.5, sm: 4.5 },
                                             backgroundColor: "#00897b",
                                             boxShadow: 'none',
                                             "&:hover": {

@@ -96,3 +96,54 @@ export const getRecyclerProfile = async (req, res) => {
     });
   }
 };
+
+// Update recycler services
+export const updateRecyclerServices = async (req, res) => {
+  try {
+    const { acceptedWasteTypes, certifications, description, pickupRadius } = req.body;
+    const userId = req.user.id;
+
+    // Find the recycler profile for this user
+    const recycler = await Recycler.findOne({ userId });
+    
+    if (!recycler) {
+      return res.status(404).json({
+        success: false,
+        message: "Recycler profile not found"
+      });
+    }
+
+    // Update the fields if provided
+    if (acceptedWasteTypes && Array.isArray(acceptedWasteTypes)) {
+      recycler.acceptedWasteTypes = acceptedWasteTypes;
+    }
+    
+    if (certifications !== undefined) {
+      recycler.certifications = certifications;
+    }
+    
+    if (description !== undefined) {
+      recycler.description = description;
+    }
+    
+    if (pickupRadius !== undefined) {
+      recycler.pickupRadius = pickupRadius;
+    }
+
+    await recycler.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Recycler services updated successfully",
+      data: recycler
+    });
+
+  } catch (error) {
+    console.error('Error in updateRecyclerServices:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating recycler services",
+      error: error.message
+    });
+  }
+};

@@ -1,64 +1,56 @@
 import express from "express";
-import User from "../models/User.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { 
+    register, 
+    login, 
+    getCurrentUser, 
+    forgotPassword, 
+    resetPassword,
+    updateProfile 
+} from "../controllers/authController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Signup Route
-router.post("/signup", async (req, res) => {
-  try {
-    const { username, email, password, role } = req.body;
+/**
+ * @route   POST /api/auth/signup
+ * @desc    Register a new user
+ * @access  Public
+ */
+router.post("/signup", register);
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: "User already exists" });
+/**
+ * @route   POST /api/auth/login
+ * @desc    Authenticate user & get token
+ * @access  Public
+ */
+router.post("/login", login);
 
-    // Hash Password
-    const hashedPassword = await bcrypt.hash(password, 10);
+/**
+ * @route   GET /api/auth/current-user
+ * @desc    Get current user data from token
+ * @access  Public (with token)
+ */
+router.get("/current-user", getCurrentUser);
 
-    // Create new user
-    const newUser = new User({ username, email, password: hashedPassword, role: role || "user" });
-    await newUser.save();
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Request password reset email
+ * @access  Public
+ */
+router.post("/forgot-password", forgotPassword);
 
-    // Generate token
-    const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password with token
+ * @access  Public (with reset token)
+ */
+router.post("/reset-password", resetPassword);
 
-    res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Login Route
-router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Check if user exists
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
-
-    // Compare Password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
-
-    // Generate JWT Token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-   
-    res.json({
-      token,
-      user: { id: user._id, username: user.username, email: user.email, role: user.role },
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update user profile
+ * @access  Private
+ */
+router.put("/profile", authMiddleware, updateProfile);
 
 export default router;

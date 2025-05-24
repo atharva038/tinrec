@@ -522,8 +522,8 @@ const ResponsiveNavbar = () => {
                 )}
             </Drawer>
 
-            {/* Toolbar spacer to prevent content from going under the AppBar */}
-            <Box sx={{ minHeight: "64px" }} /> {/* Adjusted to match the new navbar height */}
+        
+            <Box sx={{ minHeight: "35px" }} />
         </>
     );
 };
